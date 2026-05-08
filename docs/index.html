@@ -620,83 +620,24 @@ Fix:
               codebase. Optionally marks the Sentry issue resolved
               automatically.
             </p>
-              <div class="card-title">Step 3 — Get Your Sentry Credentials</div>
-              <div class="sub-cards">
-                <div class="sub-card">
-                  <div class="icon">🔑</div>
-                  <h4>Auth Token</h4>
-                  <ol>
-                    <li>Login to sentry.io</li>
-                    <li>Click your avatar → Settings</li>
-                    <li>Go to API → Auth Tokens</li>
-                    <li>Click "Create New Token"</li>
-                    <li>Enable: project:read, issue:read, issue:write</li>
-                    <li>Copy the token</li>
-                  </ol>
-                  <a
-                    class="link-btn"
-                    href="https://sentry.io/settings/account/api/auth-tokens/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Get Auth Token →
-                  </a>
-                </div>
-                <div class="sub-card">
-                  <div class="icon">🏢</div>
-                  <h4>Organization Slug</h4>
-                  <ol>
-                    <li>Login to sentry.io</li>
-                    <li>Look at your browser URL</li>
-                    <li>It looks like: sentry.io/organizations/YOUR-SLUG/</li>
-                    <li>Copy YOUR-SLUG part</li>
-                  </ol>
-                  <div class="code-block">
-                    URL: sentry.io/organizations/acme-corp/issues/
-                    <br />Slug: acme-corp
-                  </div>
-                </div>
-                <div class="sub-card">
-                  <div class="icon">📁</div>
-                  <h4>Project Slug</h4>
-                  <ol>
-                    <li>Go to sentry.io → Projects</li>
-                    <li>Click your project</li>
-                    <li>Go to Settings → Projects → your project</li>
-                    <li>URL looks like: .../projects/YOUR-SLUG/</li>
-                    <li>Copy YOUR-SLUG part</li>
-                  </ol>
-                  <div class="code-block">
-                    URL: .../projects/my-website/
-                    <br />Slug: my-website
-                  </div>
-                </div>
-              </div>
-              <div class="warning">
-                ⚠️ Keep your Auth Token private. Never commit it to git or share
-                it publicly. Claude Code stores it safely in your system keychain.
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-title">Step 4 — Configure</div>
-              <p>Claude Code will prompt you automatically:</p>
-              <div class="prompt-box">
-  ┌─────────────────────────────────────────┐
-  │  Configure Sentry Plugin                │
-  │                                         │
-  │  Sentry Auth Token: ••••••••••••••••   │
-  │  Organization Slug: acme-corp           │
-  │  Default Project:   my-website          │
-  │                                         │
-  │  [Save Configuration]                   │
-  └─────────────────────────────────────────┘
-              </div>
-              <div class="note">
-                Stored securely in system keychain. Never saved to any file.
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-title">Step 5 — Start using</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="commands">
+      <div class="container">
+        <h2>Four Commands. Full Coverage.</h2>
+        <div class="command-grid">
+          <div class="card">
+            <div class="command">/sentry:triage</div>
+            <p>
+              List your top unresolved production errors ranked by frequency.
+              See error level, affected file, event count, and last seen time.
+            </p>
+          </div>
+          <div class="card">
+            <div class="command">/sentry:fix ISSUE-123</div>
             <p>
               Deep-dive into any issue. Claude reads your code + the full stack
               trace together and proposes a targeted fix.
@@ -797,9 +738,8 @@ Fix:
           </div>
           <div class="card">
             <div class="card-title">Step 4 — Configure</div>
+            <p>Claude Code will prompt you automatically:</p>
             <div class="prompt-box">
-Claude Code will prompt you automatically:
-
 ┌─────────────────────────────────────────┐
 │  Configure Sentry Plugin                │
 │                                         │
@@ -809,8 +749,9 @@ Claude Code will prompt you automatically:
 │                                         │
 │  [Save Configuration]                   │
 └─────────────────────────────────────────┘
-
-Stored securely in system keychain. Never saved to any file.
+            </div>
+            <div class="note">
+              Stored securely in system keychain. Never saved to any file.
             </div>
           </div>
           <div class="card">
