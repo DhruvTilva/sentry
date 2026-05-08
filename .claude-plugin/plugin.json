@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "sentry",
+  "version": "1.0.0",
+  "description": "Triage and fix live Sentry production errors directly inside Claude Code.",
+  "author": {
+    "name": "Dhruv Tilva",
+    "email": "tilvadhruv8@gmail.com",
+    "url": "https://github.com/DhruvTilva/"
+  },
+  "homepage": "https://github.com/DhruvTilva/sentry",
+  "repository": "https://github.com/DhruvTilva/sentry",
+  "license": "MIT",
+  "keywords": ["sentry", "errors", "debugging", "monitoring", "production"],
+  "userConfig": {
+    "auth_token": {
+      "type": "string",
+      "title": "Sentry Auth Token",
+      "description": "Your Sentry API auth token (Settings > API Keys)",
+      "sensitive": true,
+      "required": true
+    },
+    "organization_slug": {
+      "type": "string",
+      "title": "Organization Slug",
+      "description": "Your Sentry organization slug (found in your Sentry URL)",
+      "required": true
+    },
+    "project_slug": {
+      "type": "string",
+      "title": "Default Project Slug",
+      "description": "Default Sentry project slug to query (can be overridden per command)",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sentry": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server.js"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${user_config.auth_token}",
+        "SENTRY_ORG": "${user_config.organization_slug}",
+        "SENTRY_PROJECT": "${user_config.project_slug}",
+        "NODE_PATH": "${CLAUDE_PLUGIN_DATA}/node_modules"
+      }
+    }
+  }
+}

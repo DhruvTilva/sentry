@@ -1,0 +1,8 @@
+[
+  {
+    "name": "sentry-new-errors",
+    "command": "${CLAUDE_PLUGIN_ROOT}/bin/poll-sentry.sh",
+    "description": "Watch for new P1/P2 Sentry errors and alert Claude",
+    "when": "always"
+  }
+]
