@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sentry Plugin for Claude Code</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0a0a;
+        --card: #111111;
+        --card-border: #2a2a2a;
+        --text: #f5f5f5;
+        --muted: #b5b5b5;
+        --accent: #6c5ce7;
+        --accent-2: #00b894;
+        --code-bg: #1a1a2e;
+        --code-text: #00ff88;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .container {
+        width: min(1200px, 92%);
+        margin: 0 auto;
+      }
+
+      .section {
+        padding: 88px 0;
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+      }
+
+      .section.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .hero {
+        padding: 100px 0 90px;
+        background: radial-gradient(
+            circle at 20% 20%,
+            rgba(108, 92, 231, 0.25),
+            transparent 45%
+          ),
+          radial-gradient(
+            circle at 80% 0%,
+            rgba(0, 184, 148, 0.2),
+            transparent 40%
+          ),
+          linear-gradient(180deg, #0a0a0a 0%, #0c0c12 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: -50% 0 0 0;
+        background: linear-gradient(
+          120deg,
+          rgba(108, 92, 231, 0.15),
+          rgba(0, 184, 148, 0.1),
+          rgba(108, 92, 231, 0.2)
+        );
+        filter: blur(80px);
+        animation: glow 12s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      @keyframes glow {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0.6;
+        }
+        50% {
+          transform: translateY(-30px) scale(1.05);
+          opacity: 0.9;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 0.6;
+        }
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 48px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      h1 {
+        font-size: clamp(2.4rem, 5vw, 4rem);
+        line-height: 1.05;
+        margin-bottom: 18px;
+      }
+
+      h2 {
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        margin-bottom: 20px;
+      }
+
+      p {
+        color: var(--muted);
+        margin: 0 0 20px;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin: 26px 0 18px;
+      }
+
+      .btn {
+        padding: 12px 22px;
+        border-radius: 999px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 12px 30px rgba(108, 92, 231, 0.35);
+      }
+
+      .btn-outline {
+        border: 1px solid var(--accent);
+        color: #fff;
+        background: transparent;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      .badge {
+        border: 1px solid var(--card-border);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        background: #0f0f0f;
+      }
+
+      .terminal {
+        background: #0d0f14;
+        border: 1px solid #222;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .terminal-bar {
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #111827;
+        border-bottom: 1px solid #1f2937;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .dot.red {
+        background: #ff5f56;
+      }
+
+      .dot.yellow {
+        background: #ffbd2e;
+      }
+
+      .dot.green {
+        background: #27c93f;
+      }
+
+      .terminal-body {
+        padding: 20px;
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        color: #d1d5db;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+
+      .prompt {
+        color: #7dd3fc;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 22px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(108, 92, 231, 0.2);
+      }
+
+      .card-title {
+        font-weight: 600;
+        margin: 10px 0 8px;
+      }
+
+      .icon {
+        font-size: 1.6rem;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .list-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        color: var(--muted);
+      }
+
+      .x {
+        color: #ff6b6b;
+        font-weight: 700;
+      }
+
+      .check {
+        color: var(--accent-2);
+        font-weight: 700;
+      }
+
+      .stat {
+        margin-top: 18px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .command-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+
+      .command {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        color: #fff;
+        font-size: 0.95rem;
+      }
+
+      .code-block {
+        position: relative;
+        background: var(--code-bg);
+        color: var(--code-text);
+        border-radius: 12px;
+        padding: 16px 18px;
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        overflow: hidden;
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        cursor: pointer;
+      }
+
+      .code-block:hover .copy-btn {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+
+      .form-mock {
+        display: grid;
+        gap: 12px;
+      }
+
+      .form-row {
+        background: #0f0f0f;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .sub-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 12px;
+      }
+
+      .sub-card {
+        border: 1px solid #242424;
+        border-radius: 12px;
+        padding: 14px;
+        background: #0f0f0f;
+      }
+
+      .sub-card h4 {
+        margin: 8px 0 8px;
+        font-size: 1rem;
+      }
+
+      .sub-card ol {
+        margin: 0 0 10px 18px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .sub-card .code-block {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+
+      .link-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #fff;
+        text-decoration: none;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        margin-top: 6px;
+      }
+
+      .warning {
+        margin-top: 20px;
+        border: 1px solid #3a2f0f;
+        background: #1a1406;
+        color: #f5d27a;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 0.9rem;
+      }
+
+      .prompt-box {
+        background: #0f0f0f;
+        border: 1px solid #242424;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        color: #d1d5db;
+        white-space: pre-wrap;
+      }
+
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        background: #0f0f0f;
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 20px;
+        font-weight: 600;
+      }
+
+      .diagram span {
+        padding: 8px 12px;
+        border: 1px solid #222;
+        border-radius: 10px;
+        background: #111;
+      }
+
+      .badges-row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+
+      .badge-tech {
+        border-radius: 999px;
+        border: 1px solid var(--card-border);
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .note {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .accordion {
+        display: grid;
+        gap: 10px;
+      }
+
+      details {
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        background: #0f0f0f;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .footer {
+        padding: 30px 0 50px;
+        border-top: 1px solid #1b1b1b;
+        color: var(--muted);
+        text-align: center;
+        font-size: 0.9rem;
+      }
+
+      .footer a {
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .footer .links {
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          padding-top: 80px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <h1>Fix Production Errors Without Leaving Your Terminal</h1>
+          <p>
+            Sentry plugin for Claude Code — triage, debug, and fix live crashes
+            instantly with AI
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#install">Install Plugin</a>
+            <a
+              class="btn btn-outline"
+              href="https://github.com/DhruvTilva/sentry"
+              target="_blank"
+              rel="noreferrer"
+              >View on GitHub</a
+            >
+          </div>
+          <div class="badges">
+            <span class="badge">Claude Code Plugin</span>
+            <span class="badge">MIT License</span>
+            <span class="badge">v1.0.0</span>
+            <span class="badge">Node.js 18+</span>
+          </div>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-body">
+<span class="prompt">&gt; /sentry:triage</span>
+
+Fetching top Sentry issues...
+
+#1  [fatal]  ISSUE-8821  TypeError: Cannot read properties of null
+    File: src/checkout/payment.js line 142
+    Events: 847 times · Last seen: 2 minutes ago
+
+#2  [error]  ISSUE-8819  UnhandledPromiseRejection in order.service.ts
+    File: src/orders/order.service.ts line 89
+    Events: 203 times · Last seen: 14 minutes ago
+
+Which issue should I fix?
+
+<span class="prompt">&gt; fix #1</span>
+
+Reading stack trace...
+Opening src/checkout/payment.js...
+
+Root cause: cart object is null when user has no active session
+
+Fix:
+- const total = cart.items.reduce(...)
++ const total = cart?.items?.reduce(...) ?? 0
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <div class="container">
+        <h2>The Old Way Is Broken</h2>
+        <div class="two-col">
+          <div class="list">
+            <div class="list-item"><span class="x">✕</span>Step 1: Error alert fires on your phone at 2am</div>
+            <div class="list-item"><span class="x">✕</span>Step 2: Open browser, navigate to Sentry dashboard</div>
+            <div class="list-item"><span class="x">✕</span>Step 3: Find the issue, read the stack trace</div>
+            <div class="list-item"><span class="x">✕</span>Step 4: Copy the error, open a new tab</div>
+            <div class="list-item"><span class="x">✕</span>Step 5: Paste into ChatGPT or Claude web</div>
+            <div class="list-item"><span class="x">✕</span>Step 6: Manually find the file, apply the fix</div>
+          </div>
+          <div class="list">
+            <div class="list-item"><span class="check">✓</span>Step 1: Error fires</div>
+            <div class="list-item"><span class="check">✓</span>Step 2: Type /sentry:triage in your terminal</div>
+            <div class="list-item"><span class="check">✓</span>Step 3: Claude reads your code + the error together</div>
+            <div class="list-item"><span class="check">✓</span>Step 4: Fix applied</div>
+            <div class="stat">From alert to fix in under 60 seconds</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="container">
+        <h2>How It Works</h2>
+        <div class="cards">
+          <div class="card">
+            <div class="icon">🔴</div>
+            <div class="card-title">Live Error Detection</div>
+            <p>
+              Sentry captures every unhandled exception, crash, and promise
+              rejection from your running application. Our background monitor
+              polls for critical P1/P2 errors every 60 seconds and alerts Claude
+              automatically — no manual checking required.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">🧠</div>
+            <div class="card-title">AI-Powered Root Cause Analysis</div>
+            <p>
+              Claude fetches the full stack trace, reads your actual source
+              files, and cross-references both to pinpoint the exact line
+              causing the crash. Not just the symptom — the real root cause.
+            </p>
+          </div>
+          <div class="card">
+            <div class="icon">✅</div>
+            <div class="card-title">One-Command Fix</div>
+            <p>
+              Claude proposes a precise, minimal code fix with a before/after
+              diff. You review, approve, and Claude applies it directly to your
+              codebase. Optionally marks the Sentry issue resolved
+              automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="commands">
+      <div class="container">
+        <h2>Four Commands. Full Coverage.</h2>
+        <div class="command-grid">
+          <div class="card">
+            <div class="command">/sentry:triage</div>
+            <p>
+              List your top unresolved production errors ranked by frequency.
+              See error level, affected file, event count, and last seen time.
+            </p>
+          </div>
+          <div class="card">
+            <div class="command">/sentry:fix ISSUE-123</div>
+            <p>
+              Deep-dive into any issue. Claude reads your code + the full stack
+              trace together and proposes a targeted fix.
+            </p>
+          </div>
+          <div class="card">
+            <div class="command">/sentry:search "keyword"</div>
+            <p>
+              Search across all your Sentry issues by error message, function
+              name, or any keyword.
+            </p>
+          </div>
+          <div class="card">
+            <div class="command">Background Monitor</div>
+            <p>
+              Runs silently in every Claude Code session. Alerts you
+              automatically when new critical or fatal errors are detected.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="container">
+        <h2>Get Started in 2 Minutes</h2>
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">Step 1 — Install Claude Code</div>
+            <div class="code-block">
+              <button class="copy-btn" data-copy="npm install -g @anthropic-ai/claude-code">Copy</button>
+              npm install -g @anthropic-ai/claude-code
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Step 2 — Install Sentry Plugin</div>
+            <div class="code-block">
+              <button class="copy-btn" data-copy="/plugin install sentry@claude-plugins-official">Copy</button>
+              /plugin install sentry@claude-plugins-official
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Step 3 — Get Your Sentry Credentials</div>
+            <div class="sub-cards">
+              <div class="sub-card">
+                <div class="icon">🔑</div>
+                <h4>Auth Token</h4>
+                <ol>
+                  <li>Login to sentry.io</li>
+                  <li>Click your avatar → Settings</li>
+                  <li>Go to API → Auth Tokens</li>
+                  <li>Click "Create New Token"</li>
+                  <li>Enable: project:read, issue:read, issue:write</li>
+                  <li>Copy the token</li>
+                </ol>
+                <a
+                  class="link-btn"
+                  href="https://sentry.io/settings/account/api/auth-tokens/"
+                  target="_blank"
+                  rel="noreferrer"
+                  >Get Auth Token →</a
+                >
+              </div>
+              <div class="sub-card">
+                <div class="icon">🏢</div>
+                <h4>Organization Slug</h4>
+                <ol>
+                  <li>Login to sentry.io</li>
+                  <li>Look at your browser URL</li>
+                  <li>It looks like: sentry.io/organizations/YOUR-SLUG/</li>
+                  <li>Copy YOUR-SLUG part</li>
+                </ol>
+                <div class="code-block">
+                  URL: sentry.io/organizations/acme-corp/issues/
+                  <br />Slug: acme-corp
+                </div>
+              </div>
+              <div class="sub-card">
+                <div class="icon">📁</div>
+                <h4>Project Slug</h4>
+                <ol>
+                  <li>Go to sentry.io → Projects</li>
+                  <li>Click your project</li>
+                  <li>Go to Settings → Projects → your project</li>
+                  <li>URL looks like: .../projects/YOUR-SLUG/</li>
+                  <li>Copy YOUR-SLUG part</li>
+                </ol>
+                <div class="code-block">
+                  URL: .../projects/my-website/
+                  <br />Slug: my-website
+                </div>
+              </div>
+            </div>
+            <div class="warning">
+              ⚠️ Keep your Auth Token private. Never commit it to git or share
+              it publicly. Claude Code stores it safely in your system keychain.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Step 4 — Configure</div>
+            <div class="prompt-box">
+Claude Code will prompt you automatically:
+
+┌─────────────────────────────────────────┐
+│  Configure Sentry Plugin                │
+│                                         │
+│  Sentry Auth Token: ••••••••••••••••   │
+│  Organization Slug: acme-corp           │
+│  Default Project:   my-website          │
+│                                         │
+│  [Save Configuration]                   │
+└─────────────────────────────────────────┘
+
+Stored securely in system keychain. Never saved to any file.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Step 5 — Start using</div>
+            <div class="code-block">
+              <button class="copy-btn" data-copy="/sentry:triage\n/sentry:fix ISSUE-123\n/sentry:search \"checkout error\"">Copy</button>
+              /sentry:triage
+              <br />/sentry:fix ISSUE-123
+              <br />/sentry:search "checkout error"
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="container">
+        <h2>How The Plugin Is Built</h2>
+        <div class="diagram">
+          <span>Your Terminal</span>
+          <span>→</span>
+          <span>Claude Code</span>
+          <span>→</span>
+          <span>Sentry Plugin</span>
+          <span>↓</span>
+          <span>MCP Server (Node.js)</span>
+          <span>↓</span>
+          <span>Sentry REST API</span>
+          <span>↓</span>
+          <span>Your Sentry Project</span>
+        </div>
+        <div class="badges-row">
+          <span class="badge-tech">MCP Protocol</span>
+          <span class="badge-tech">Node.js 18+</span>
+          <span class="badge-tech">Sentry REST API v0</span>
+        </div>
+        <div class="note">
+          Auth token stored in system keychain — never in plain text or settings
+          files
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <h2>Frequently Asked Questions</h2>
+        <div class="accordion">
+          <details>
+            <summary>Does this work with any programming language?</summary>
+            <p>
+              Yes. The plugin works at the Sentry API level, so it works with
+              any language Sentry supports — JavaScript, TypeScript, Python,
+              PHP, Ruby, Go, and more.
+            </p>
+          </details>
+          <details>
+            <summary>Is my Sentry auth token safe?</summary>
+            <p>
+              Yes. Claude Code stores sensitive config values in your system
+              keychain (not in any file). It is never logged or transmitted
+              anywhere except directly to the Sentry API.
+            </p>
+          </details>
+          <details>
+            <summary>What Sentry plan do I need?</summary>
+            <p>
+              Any Sentry plan works including the free tier. You just need API
+              access which is available on all plans.
+            </p>
+          </details>
+          <details>
+            <summary>Does it modify my Sentry data?</summary>
+            <p>
+              Only if you explicitly ask. The resolve action (marking an issue
+              resolved) is the only write operation and requires your
+              confirmation.
+            </p>
+          </details>
+          <details>
+            <summary>Can I use this with multiple projects?</summary>
+            <p>
+              Yes. Set a default project in config, or pass a project slug
+              directly to any command like /sentry:triage my-project
+            </p>
+          </details>
+          <details>
+            <summary>Does the background monitor slow down Claude Code?</summary>
+            <p>
+              No. It runs as a lightweight background process polling every 60
+              seconds. CPU and memory impact is negligible.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>Sentry Plugin for Claude Code — Built by Dhruv Tilva</div>
+      <div class="links">
+        <a href="https://github.com/DhruvTilva/sentry" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/DhruvTilva/sentry/blob/master/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+        <a href="https://code.claude.com/docs/en/plugins" target="_blank" rel="noreferrer">Claude Code Docs</a>
+      </div>
+      <div class="note">
+        Not affiliated with Sentry or Anthropic. Built as an independent
+        open-source contribution.
+      </div>
+    </footer>
+
+    <script>
+      const sections = document.querySelectorAll(".section");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.15 }
+      );
+
+      sections.forEach((section) => observer.observe(section));
+
+      document.querySelectorAll(".copy-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const text = btn.getAttribute("data-copy");
+          try {
+            await navigator.clipboard.writeText(text);
+            const original = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(() => {
+              btn.textContent = original;
+            }, 1200);
+          } catch (error) {
+            btn.textContent = "Copy failed";
+            setTimeout(() => {
+              btn.textContent = "Copy";
+            }, 1200);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
