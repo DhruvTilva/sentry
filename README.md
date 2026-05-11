@@ -1,3 +1,7 @@
+## Documentation 
+https://dhruvtilva.github.io/sentry/
+
+
 ![Version](https://img.shields.io/badge/version-v1.0.0-6C5CE7?style=flat-square) ![License](https://img.shields.io/badge/license-MIT-00B894?style=flat-square) ![Node](https://img.shields.io/badge/node-18%2B-2D3436?style=flat-square) ![Platform](https://img.shields.io/badge/platform-Claude%20Code-6C5CE7?style=flat-square) ![Status](https://img.shields.io/badge/status-Active-00B894?style=flat-square)
 
 > Fix live Sentry production errors directly inside Claude Code — no browser, no copy-paste, no context switching.
