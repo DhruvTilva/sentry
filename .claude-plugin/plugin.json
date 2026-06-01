@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "sentry",
+  "name": "claude-sentry-error-assistant",
   "version": "1.0.0",
   "description": "Triage and fix live Sentry production errors directly inside Claude Code.",
   "author": {
